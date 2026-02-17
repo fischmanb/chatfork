@@ -66,116 +66,117 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero section animations
-      const heroTl = gsap.timeline({
+      // Hero section - dramatic exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: heroRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .to('.hero-content', { y: -150, opacity: 0, duration: 0.4 }, 0.5)
+      .to('.hero-bg', { scale: 1.3, opacity: 0, duration: 0.4 }, 0.5);
 
-      heroTl
-        .to('.hero-content', { y: -100, opacity: 0, duration: 0.5 }, 0.5)
-        .to('.hero-bg', { scale: 1.2, opacity: 0, duration: 0.5 }, 0.5);
-
-      // Features section
-      const featuresTl = gsap.timeline({
+      // Features section - dramatic entrance/exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: featuresRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .from('.features-title', { y: 100, opacity: 0, duration: 0.25 })
+      .from('.feature-card', { y: 150, opacity: 0, stagger: 0.08, duration: 0.25 }, 0.1)
+      .to('.features-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
 
-      featuresTl
-        .from('.features-title', { y: 50, opacity: 0, duration: 0.3 })
-        .from('.feature-card', { y: 80, opacity: 0, stagger: 0.1, duration: 0.3 }, 0.1)
-        .to('.features-content', { y: -100, opacity: 0, duration: 0.4 }, 0.6);
-
-      // Split section
-      const splitTl = gsap.timeline({
+      // Split section - dramatic entrance/exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: splitRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .from('.split-text', { x: -200, opacity: 0, duration: 0.25 })
+      .from('.split-visual', { x: 200, opacity: 0, scale: 0.8, duration: 0.25 }, 0.1)
+      .to('.split-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
 
-      splitTl
-        .from('.split-text', { x: -100, opacity: 0, duration: 0.3 })
-        .from('.split-visual', { x: 100, opacity: 0, scale: 0.9, duration: 0.3 }, 0.1)
-        .to('.split-content', { y: -100, opacity: 0, duration: 0.4 }, 0.6);
-
-      // Merge section
-      const mergeTl = gsap.timeline({
+      // Merge section - dramatic entrance/exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: mergeRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .from('.merge-visual', { x: -200, opacity: 0, duration: 0.25 })
+      .from('.merge-text', { x: 200, opacity: 0, duration: 0.25 }, 0.1)
+      .to('.merge-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
 
-      mergeTl
-        .from('.merge-visual', { x: -100, opacity: 0, duration: 0.3 })
-        .from('.merge-text', { x: 100, opacity: 0, duration: 0.3 }, 0.1)
-        .to('.merge-content', { y: -100, opacity: 0, duration: 0.4 }, 0.6);
-
-      // Keyboard section
-      const keyboardTl = gsap.timeline({
+      // Keyboard section - dramatic entrance/exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: keyboardRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .from('.keyboard-title', { y: 100, opacity: 0, duration: 0.25 })
+      .from('.keyboard-card', { y: 120, opacity: 0, stagger: 0.08, duration: 0.25 }, 0.1)
+      .to('.keyboard-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
 
-      keyboardTl
-        .from('.keyboard-title', { y: 50, opacity: 0, duration: 0.3 })
-        .from('.keyboard-card', { y: 60, opacity: 0, stagger: 0.1, duration: 0.3 }, 0.1)
-        .to('.keyboard-content', { y: -100, opacity: 0, duration: 0.4 }, 0.6);
-
-      // Pricing section
-      const pricingTl = gsap.timeline({
+      // Pricing section - dramatic entrance/exit
+      gsap.timeline({
         scrollTrigger: {
           trigger: pricingRef.current,
           start: 'top top',
-          end: '+=100%',
+          end: '+=120%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
         }
-      });
+      })
+      .from('.pricing-title', { y: 100, opacity: 0, duration: 0.25 })
+      .from('.pricing-card', { y: 150, opacity: 0, stagger: 0.1, duration: 0.25 }, 0.1)
+      .to('.pricing-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
 
-      pricingTl
-        .from('.pricing-title', { y: 50, opacity: 0, duration: 0.3 })
-        .from('.pricing-card', { y: 80, opacity: 0, stagger: 0.1, duration: 0.3 }, 0.1)
-        .to('.pricing-content', { y: -100, opacity: 0, duration: 0.4 }, 0.6);
-
-      // CTA section
-      const ctaTl = gsap.timeline({
+      // CTA section - dramatic entrance
+      gsap.timeline({
         scrollTrigger: {
           trigger: ctaRef.current,
           start: 'top top',
           end: '+=100%',
           pin: true,
-          scrub: 1,
+          scrub: 0.5,
+        }
+      })
+      .from('.cta-title', { y: 100, opacity: 0, duration: 0.3 })
+      .from('.cta-form', { y: 80, opacity: 0, duration: 0.3 }, 0.1)
+      .from('.cta-bg', { scale: 1.2, duration: 0.5 }, 0);
+
+      // Global snap - ensures users always land on a section
+      ScrollTrigger.create({
+        snap: {
+          snapTo: (progress) => {
+            const sectionCount = 7;
+            const sectionProgress = 1 / sectionCount;
+            const currentSection = Math.round(progress / sectionProgress);
+            return currentSection * sectionProgress;
+          },
+          duration: { min: 0.15, max: 0.35 },
+          delay: 0,
+          ease: 'power2.inOut'
         }
       });
-
-      ctaTl
-        .from('.cta-title', { y: 50, opacity: 0, duration: 0.3 })
-        .from('.cta-form', { y: 40, opacity: 0, duration: 0.3 }, 0.1)
-        .from('.cta-bg', { scale: 1.1, duration: 0.5 }, 0);
 
     }, containerRef);
 
@@ -191,7 +192,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           <span className="text-xl font-semibold text-white">Chatfork</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
+          <button onClick={() => pricingRef.current?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
           <button onClick={onGetStarted} className="text-sm text-white/60 hover:text-white transition-colors">Sign in</button>
         </div>
         <button 
