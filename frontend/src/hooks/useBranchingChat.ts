@@ -43,6 +43,8 @@ interface UseBranchingChatReturn {
   apiKeyError: string | null;
   createNewConversation: (title?: string) => Promise<string | null>;
   renameConversation: (conversationId: string, title: string) => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<boolean>;
+  deleteAllConversations: () => Promise<boolean>;
   loadConversations: () => Promise<void>;
   loadConversation: (conversationId: string) => Promise<void>;
   sendUserMessage: (content: string) => Promise<{ conversationId: string | null; isFirstMessage: boolean }>;
@@ -491,6 +493,61 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     }
   }, [getToken, state.currentConversationId]);
 
+  const deleteConversation = useCallback(async (conversationId: string): Promise<boolean> => {
+    const token = getToken();
+    if (!token) return false;
+    try {
+      const response = await fetch(`${API_URL}/ai/conversations/${conversationId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          conversations: prev.conversations.filter(c => c.id !== conversationId),
+          // Clear current conversation if it was deleted
+          ...(prev.currentConversationId === conversationId ? {
+            currentConversationId: null,
+            currentBranchId: null,
+            messages: [],
+            branches: [],
+          } : {}),
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      return false;
+    }
+  }, [getToken]);
+
+  const deleteAllConversations = useCallback(async (): Promise<boolean> => {
+    const token = getToken();
+    if (!token) return false;
+    try {
+      const response = await fetch(`${API_URL}/ai/conversations`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          conversations: [],
+          currentConversationId: null,
+          currentBranchId: null,
+          messages: [],
+          branches: [],
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting all conversations:', error);
+      return false;
+    }
+  }, [getToken]);
+
   const switchBranch = useCallback((branchId: string) => {
     setState(prev => ({ ...prev, currentBranchId: branchId }));
   }, []);
@@ -502,6 +559,8 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     apiKeyError,
     createNewConversation,
     renameConversation,
+    deleteConversation,
+    deleteAllConversations,
     loadConversations,
     loadConversation,
     sendUserMessage,
