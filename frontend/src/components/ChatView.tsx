@@ -284,7 +284,7 @@ export function ChatView({ userEmail, userName, onLogout, getToken }: ChatViewPr
               </div>
               <button
                 onClick={onLogout}
-                className="px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
+                className="px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg transition-all border border-slate-700"
               >
                 Logout
               </button>
