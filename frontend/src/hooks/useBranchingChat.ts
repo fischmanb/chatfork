@@ -17,6 +17,8 @@ export interface Branch {
   parentBranchId: string | null;
   forkedFromMessageId: string | null;
   createdAt: string;
+  messageCount?: number;
+  lastActivity?: string;
 }
 
 export interface Conversation {
@@ -186,23 +188,16 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     }
   }, [getToken]);
 
-  const loadConversation = useCallback(async (conversationId: string) => {
+  const loadBranchMessages = useCallback(async (conversationId: string, branchId: string) => {
     const token = getToken();
     if (!token) return;
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      const [messagesRes, branchesRes] = await Promise.all([
-        fetch(`${API_URL}/ai/conversations/${conversationId}/messages`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch(`${API_URL}/ai/conversations/${conversationId}/branches`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-      ]);
-      if (messagesRes.ok && branchesRes.ok) {
-        const messagesData = await messagesRes.json();
-        const branchesData = await branchesRes.json();
-        const messages: Message[] = (messagesData.messages || []).map((m: any) => ({
+      const response = await fetch(`${API_URL}/ai/conversations/${conversationId}/messages?branchId=${branchId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const messages: Message[] = (data.messages || []).map((m: any) => ({
           id: m.id,
           role: m.role,
           content: m.content,
@@ -210,14 +205,42 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
           parentMessageId: m.parent_message_id,
           timestamp: m.created_at,
         }));
+        return messages;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error loading branch messages:', error);
+      return [];
+    }
+  }, [getToken]);
+
+  const loadConversation = useCallback(async (conversationId: string) => {
+    const token = getToken();
+    if (!token) return;
+    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const branchesRes = await fetch(`${API_URL}/ai/conversations/${conversationId}/branches`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (branchesRes.ok) {
+        const branchesData = await branchesRes.json();
         const branches: Branch[] = (branchesData.branches || []).map((b: any) => ({
           id: b.id,
           name: b.name,
           parentBranchId: b.parent_branch_id,
           forkedFromMessageId: b.forked_from_message_id,
           createdAt: b.created_at,
+          messageCount: b.message_count,
+          lastActivity: b.last_activity,
         }));
+        
+        // Find main branch (no parent)
         const mainBranch = branches.find(b => !b.parentBranchId) || branches[0];
+        
+        // Load messages for main branch
+        const messages = mainBranch ? await loadBranchMessages(conversationId, mainBranch.id) : [];
+        
         setState(prev => ({
           ...prev,
           messages,
@@ -233,7 +256,7 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
       console.error('Error loading conversation:', error);
       setState(prev => ({ ...prev, isLoading: false, error: 'Network error. Please try again.' }));
     }
-  }, [getToken]);
+  }, [getToken, loadBranchMessages]);
 
   const createNewConversation = useCallback(async (title?: string): Promise<string | null> => {
     const token = getToken();
@@ -548,9 +571,22 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     }
   }, [getToken]);
 
-  const switchBranch = useCallback((branchId: string) => {
-    setState(prev => ({ ...prev, currentBranchId: branchId }));
-  }, []);
+  const switchBranch = useCallback(async (branchId: string) => {
+    const conversationId = state.currentConversationId;
+    if (!conversationId) return;
+    
+    setState(prev => ({ ...prev, isLoading: true }));
+    
+    // Load messages for the selected branch
+    const messages = await loadBranchMessages(conversationId, branchId);
+    
+    setState(prev => ({
+      ...prev,
+      currentBranchId: branchId,
+      messages,
+      isLoading: false,
+    }));
+  }, [state.currentConversationId, loadBranchMessages]);
 
   return {
     state,
