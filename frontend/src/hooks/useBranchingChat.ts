@@ -239,11 +239,11 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
         const mainBranch = branches.find(b => !b.parentBranchId) || branches[0];
         
         // Load messages for main branch
-        const messages = mainBranch ? await loadBranchMessages(conversationId, mainBranch.id) : [];
+        const messages: Message[] = mainBranch ? await loadBranchMessages(conversationId, mainBranch.id) : [];
         
         setState(prev => ({
           ...prev,
-          messages,
+          messages: messages || [],
           branches,
           currentConversationId: conversationId,
           currentBranchId: mainBranch?.id || null,
@@ -578,12 +578,12 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     setState(prev => ({ ...prev, isLoading: true }));
     
     // Load messages for the selected branch
-    const messages = await loadBranchMessages(conversationId, branchId);
+    const messages: Message[] = await loadBranchMessages(conversationId, branchId);
     
     setState(prev => ({
       ...prev,
       currentBranchId: branchId,
-      messages,
+      messages: messages || [],
       isLoading: false,
     }));
   }, [state.currentConversationId, loadBranchMessages]);
