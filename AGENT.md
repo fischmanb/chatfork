@@ -183,7 +183,7 @@ VITE_API_URL=https://chatfork-api.lively-block-6291.workers.dev
 - `POST /auth/login` - `{ email, password }`
 - `POST /ai/conversations` - `{ title }`
 - `GET /ai/conversations` - List all
-- `PATCH /ai/conversations/:id` - `{ title }`
+- `PUT /ai/conversations/:id` - `{ title }`
 - `POST /ai/chat` - `{ messages, conversationId, branchId }`
 - `POST /ai/fork` - `{ conversationId, parentMessageId, branchName }`
 
