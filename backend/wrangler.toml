@@ -1,0 +1,12 @@
+name = "chatfork-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chatfork-db"
+database_id = "d9e9a0f9-1312-40e2-835e-3ee63e56f025"
+
+[observability]
+enabled = true
+head_sampling_rate = 1

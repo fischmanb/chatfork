@@ -1,0 +1,232 @@
+/* App-specific styles */
+
+/* Smooth section transitions */
+section {
+  position: relative;
+}
+
+/* Pinned section base - desktop only */
+.pinned-section {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Mobile: disable pinned sections */
+@media (max-width: 768px) {
+  .pinned-section {
+    height: auto;
+    min-height: 100vh;
+    width: 100%;
+    overflow: visible;
+    padding: 80px 0;
+  }
+}
+
+/* Button hover effects */
+.btn-hover {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.btn-hover:hover {
+  transform: translateY(-2px);
+}
+.btn-hover:active {
+  transform: scale(0.98);
+}
+
+/* Accent glow effect */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(183, 255, 58, 0.15);
+}
+
+/* Chat panel styling */
+.chat-panel {
+  background: #14171F;
+  border: 1px solid rgba(242, 244, 248, 0.14);
+  border-radius: 12px;
+}
+
+/* Message bubble */
+.message-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .message-bubble {
+    max-width: 90%;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+.message-user {
+  background: rgba(183, 255, 58, 0.12);
+  border: 1px solid rgba(183, 255, 58, 0.25);
+  color: #F2F4F8;
+  margin-left: auto;
+}
+
+.message-assistant {
+  background: rgba(242, 244, 248, 0.06);
+  border: 1px solid rgba(242, 244, 248, 0.1);
+  color: #F2F4F8;
+}
+
+/* Fork chip */
+.fork-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(183, 255, 58, 0.12);
+  border: 1px solid rgba(183, 255, 58, 0.35);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #B7FF3A;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* Branch tree lines */
+.branch-tree-line {
+  stroke: rgba(242, 244, 248, 0.2);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.branch-tree-node {
+  fill: #14171F;
+  stroke: rgba(242, 244, 248, 0.3);
+  stroke-width: 1.5;
+}
+
+.branch-tree-node.active {
+  fill: rgba(183, 255, 58, 0.2);
+  stroke: #B7FF3A;
+}
+
+/* Diff row */
+.diff-row {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .diff-row {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+}
+
+.diff-added {
+  background: rgba(183, 255, 58, 0.08);
+  border-left: 2px solid #B7FF3A;
+}
+
+.diff-removed {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 2px solid #ef4444;
+}
+
+/* Keyboard chip */
+.keyboard-chip {
+  background: #14171F;
+  border: 1px solid rgba(242, 244, 248, 0.14);
+  border-radius: 10px;
+  padding: 20px 28px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.keyboard-chip:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .keyboard-chip {
+    padding: 16px 20px;
+  }
+}
+
+/* Card hover */
+.feature-card {
+  background: #14171F;
+  border: 1px solid rgba(242, 244, 248, 0.14);
+  border-radius: 12px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(183, 255, 58, 0.3);
+}
+
+/* Pricing card */
+.pricing-card {
+  background: #14171F;
+  border: 1px solid rgba(242, 244, 248, 0.14);
+  border-radius: 12px;
+  padding: 32px;
+}
+
+.pricing-card.pro {
+  border-top: 2px solid #B7FF3A;
+}
+
+@media (max-width: 640px) {
+  .pricing-card {
+    padding: 24px;
+  }
+}
+
+/* Testimonial card */
+.testimonial-card {
+  background: #14171F;
+  border: 1px solid rgba(242, 244, 248, 0.14);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+@media (max-width: 640px) {
+  .testimonial-card {
+    padding: 20px;
+  }
+}
+
+/* Hairline divider */
+.hairline {
+  height: 1px;
+  background: rgba(242, 244, 248, 0.08);
+}
+
+.hairline-vertical {
+  width: 1px;
+  background: rgba(242, 244, 248, 0.14);
+}
+
+/* Mobile nav adjustments */
+@media (max-width: 640px) {
+  nav .hidden.md\:flex {
+    display: none;
+  }
+}
+
+/* Scrollbar for chat */
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(242, 244, 248, 0.1);
+  border-radius: 2px;
+}
