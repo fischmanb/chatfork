@@ -138,7 +138,17 @@ wrangler secret put MOONSHOT_API_KEY  # Optional default AI key
 VITE_API_URL=https://your-worker.your-subdomain.workers.dev
 ```
 
-## For LLM Agents / Contributors
+## For AI Agents / LLMs
+
+See [AGENT.md](./AGENT.md) - A complete guide for LLMs to understand and work on this project.
+
+**Quick start for LLMs:**
+```bash
+git clone https://github.com/fischmanb/chatfork.git
+cd chatfork && cat AGENT.md
+```
+
+## For Human Contributors
 
 See [FILEMAP.md](./FILEMAP.md) for detailed file navigation.
 
