@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  GitBranch, 
   ArrowRight, 
   Github, 
   X,
-  Command,
   ArrowUp,
   ArrowDown,
   Check
