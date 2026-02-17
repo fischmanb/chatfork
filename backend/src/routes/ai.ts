@@ -223,3 +223,69 @@ aiRouter.get('/conversations', async (c) => {
     return c.json({ error: 'Failed to fetch conversations' }, 500);
   }
 });
+
+// Delete a single conversation
+aiRouter.delete('/conversations/:id', async (c) => {
+  const userId = c.get('userId');
+  const conversationId = c.req.param('id');
+  try {
+    // Verify the conversation belongs to the user
+    const conversation = await c.env.DB.prepare(
+      'SELECT id FROM conversations WHERE id = ? AND user_id = ?'
+    ).bind(conversationId, userId).first();
+    
+    if (!conversation) {
+      return c.json({ error: 'Conversation not found' }, 404);
+    }
+    
+    // Delete related data (cascade delete)
+    await c.env.DB.batch([
+      // Delete messages first
+      c.env.DB.prepare('DELETE FROM messages WHERE conversation_id = ?').bind(conversationId),
+      // Delete branches
+      c.env.DB.prepare('DELETE FROM branches WHERE conversation_id = ?').bind(conversationId),
+      // Delete conversation
+      c.env.DB.prepare('DELETE FROM conversations WHERE id = ?').bind(conversationId),
+    ]);
+    
+    return c.json({ success: true, message: 'Conversation deleted' });
+  } catch (error) {
+    console.error('Error deleting conversation:', error);
+    return c.json({ error: 'Failed to delete conversation' }, 500);
+  }
+});
+
+// Delete all conversations for the user
+aiRouter.delete('/conversations', async (c) => {
+  const userId = c.get('userId');
+  try {
+    // Get all conversation IDs for this user
+    const conversations = await c.env.DB.prepare(
+      'SELECT id FROM conversations WHERE user_id = ?'
+    ).bind(userId).all();
+    
+    const conversationIds = (conversations.results || []).map((c: any) => c.id);
+    
+    if (conversationIds.length === 0) {
+      return c.json({ success: true, message: 'No conversations to delete', deletedCount: 0 });
+    }
+    
+    // Delete all related data for each conversation
+    for (const convId of conversationIds) {
+      await c.env.DB.batch([
+        c.env.DB.prepare('DELETE FROM messages WHERE conversation_id = ?').bind(convId),
+        c.env.DB.prepare('DELETE FROM branches WHERE conversation_id = ?').bind(convId),
+        c.env.DB.prepare('DELETE FROM conversations WHERE id = ?').bind(convId),
+      ]);
+    }
+    
+    return c.json({ 
+      success: true, 
+      message: 'All conversations deleted',
+      deletedCount: conversationIds.length 
+    });
+  } catch (error) {
+    console.error('Error deleting all conversations:', error);
+    return c.json({ error: 'Failed to delete conversations' }, 500);
+  }
+});
