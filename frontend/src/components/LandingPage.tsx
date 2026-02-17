@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   ArrowRight, 
-  Github, 
   X,
   ArrowUp,
   ArrowDown,
@@ -53,7 +52,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   const [activeSection, setActiveSection] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
   const sections = [
     { id: 'hero', title: 'Hero' },
@@ -180,7 +179,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Hero Section */}
       <section 
-        ref={el => sectionRefs.current[0] = el}
+        ref={el => { sectionRefs.current[0] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden"
         style={{
           opacity: activeSection === 0 ? 1 : 0,
@@ -283,7 +282,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Features Section - Three Moves */}
       <section 
-        ref={el => sectionRefs.current[1] = el}
+        ref={el => { sectionRefs.current[1] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden bg-black"
         style={{
           opacity: activeSection === 1 ? 1 : 0,
@@ -341,7 +340,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Split Section */}
       <section 
-        ref={el => sectionRefs.current[2] = el}
+        ref={el => { sectionRefs.current[2] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden bg-black"
         style={{
           opacity: activeSection === 2 ? 1 : 0,
@@ -421,7 +420,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Merge Section */}
       <section 
-        ref={el => sectionRefs.current[3] = el}
+        ref={el => { sectionRefs.current[3] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden bg-black"
         style={{
           opacity: activeSection === 3 ? 1 : 0,
@@ -513,7 +512,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Keyboard Section */}
       <section 
-        ref={el => sectionRefs.current[4] = el}
+        ref={el => { sectionRefs.current[4] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden bg-black"
         style={{
           opacity: activeSection === 4 ? 1 : 0,
@@ -590,7 +589,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* Pricing Section */}
       <section 
-        ref={el => sectionRefs.current[5] = el}
+        ref={el => { sectionRefs.current[5] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden bg-black"
         style={{
           opacity: activeSection === 5 ? 1 : 0,
@@ -697,7 +696,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
       {/* CTA Section */}
       <section 
-        ref={el => sectionRefs.current[6] = el}
+        ref={el => { sectionRefs.current[6] = el; }}
         className="fixed inset-0 h-screen flex items-center justify-center overflow-hidden"
         style={{
           opacity: activeSection === 6 ? 1 : 0,
