@@ -191,7 +191,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           <span className="text-xl font-semibold text-white">Chatfork</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => ScrollTrigger.getById('pricing')?.scrollTrigger?.scrollTrigger?.scroll(0)} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
+          <button onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
           <button onClick={onGetStarted} className="text-sm text-white/60 hover:text-white transition-colors">Sign in</button>
         </div>
         <button 
