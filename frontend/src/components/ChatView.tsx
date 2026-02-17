@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBranchingChat } from '../hooks/useBranchingChat';
-import { GitBranch, MessageSquare, Plus, Send, Loader2, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
+import { GitBranch, MessageSquare, Plus, Send, Loader2, Sparkles, Trash2, AlertTriangle, LogOut } from 'lucide-react';
 
 interface ChatViewProps {
   userEmail: string;
@@ -9,7 +9,7 @@ interface ChatViewProps {
   getToken: () => string | null;
 }
 
-export function ChatView({ getToken }: ChatViewProps) {
+export function ChatView({ userEmail, userName, onLogout, getToken }: ChatViewProps) {
   const [input, setInput] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
@@ -268,11 +268,27 @@ export function ChatView({ getToken }: ChatViewProps) {
             </div>
           </div>
           
-          <div className="flex items-center gap-3 text-sm text-slate-400 bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-700/50">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span>Click Fork on any message</span>
-            <span className="text-slate-600">|</span>
-            <span>Click branch in sidebar to switch</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-3 text-sm text-slate-400 bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-700/50">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>Click Fork on any message</span>
+              <span className="text-slate-600">|</span>
+              <span>Click branch to switch</span>
+            </div>
+            
+            {/* User Menu */}
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-700/50">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-slate-300">{userName || userEmail.split('@')[0]}</p>
+                <p className="text-xs text-slate-500">{userEmail}</p>
+              </div>
+              <button
+                onClick={onLogout}
+                className="px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </header>
 
