@@ -1,24 +1,30 @@
+/**
+ * ChatFork Type Definitions
+ * 
+ * All timestamps use ISO 8601 format in UTC (e.g., "2024-01-15T10:30:00.000Z")
+ * SQLite datetime('now') returns UTC timestamps
+ */
+
 export interface User {
   id: string;
   email: string;
-  display_name: string | null;
+  name: string | null;
+  password_hash: string;
   created_at: string;
-  updated_at: string;
-  last_login_at: string | null;
 }
 
-export interface Workspace {
+export interface Session {
   id: string;
-  name: string;
-  owner_id: string;
+  user_id: string;
+  token: string;
+  expires_at: string;
   created_at: string;
 }
 
 export interface Conversation {
   id: string;
-  workspace_id: string;
+  user_id: string;
   title: string;
-  created_by: string;
   created_at: string;
   updated_at: string;
 }
@@ -29,37 +35,22 @@ export interface Branch {
   name: string;
   parent_branch_id: string | null;
   forked_from_message_id: string | null;
-  created_by: string;
   created_at: string;
-  color: string | null;
-  is_active: boolean;
 }
 
 export interface Message {
   id: string;
   conversation_id: string;
-  branch_id: string;
-  parent_message_id: string | null;
+  branch_id: string | null;
+  role: 'user' | 'assistant';
   content: string;
-  role: 'user' | 'assistant' | 'system';
-  model: string | null;
-  tokens_used: number | null;
-  created_at: string;
-  created_by: string | null;
-}
-
-export interface UserSession {
-  token: string;
-  user_id: string;
-  expires_at: string;
+  parent_message_id: string | null;
   created_at: string;
 }
 
 export interface UserSettings {
   user_id: string;
-  encrypted_api_key: string | null;
-  api_key_iv: string | null;
-  default_model: string;
-  theme: string;
+  api_key_encrypted: string | null;
+  created_at: string;
   updated_at: string;
 }

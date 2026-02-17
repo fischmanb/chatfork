@@ -1,3 +1,6 @@
+-- Use ISO 8601 UTC timestamps throughout
+-- SQLite: datetime('now') returns UTC when used with 'Z' suffix
+
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
@@ -47,3 +50,17 @@ CREATE TABLE IF NOT EXISTS messages (
   parent_message_id TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );
+
+-- Trigger to auto-update updated_at on conversations
+CREATE TRIGGER IF NOT EXISTS update_conversations_updated_at
+AFTER UPDATE ON conversations
+BEGIN
+  UPDATE conversations SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+
+-- Trigger to auto-update updated_at on user_settings
+CREATE TRIGGER IF NOT EXISTS update_user_settings_updated_at
+AFTER UPDATE ON user_settings
+BEGIN
+  UPDATE user_settings SET updated_at = datetime('now') WHERE user_id = NEW.user_id;
+END;

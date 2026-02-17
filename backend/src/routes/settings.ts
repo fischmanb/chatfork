@@ -43,14 +43,15 @@ settingsRouter.post('/api-key', async (c) => {
     // Encrypt the API key
     const encryptedKey = await encryptApiKey(apiKey.trim(), c.env.ENCRYPTION_KEY);
     
-    // Upsert the settings
+    // Upsert the settings with ISO timestamp
+    const now = new Date().toISOString();
     await c.env.DB.prepare(
-      `INSERT INTO user_settings (user_id, api_key_encrypted, updated_at)
-       VALUES (?, ?, datetime('now'))
+      `INSERT INTO user_settings (user_id, api_key_encrypted, created_at, updated_at)
+       VALUES (?, ?, ?, ?)
        ON CONFLICT(user_id) DO UPDATE SET
        api_key_encrypted = excluded.api_key_encrypted,
-       updated_at = datetime('now')`
-    ).bind(userId, encryptedKey).run();
+       updated_at = ?`
+    ).bind(userId, encryptedKey, now, now, now).run();
     
     return c.json({ success: true, message: 'API key saved' });
   } catch (error) {
@@ -64,9 +65,10 @@ settingsRouter.delete('/api-key', async (c) => {
   const userId = c.get('userId');
   
   try {
+    const now = new Date().toISOString();
     await c.env.DB.prepare(
-      'UPDATE user_settings SET api_key_encrypted = NULL, updated_at = datetime("now") WHERE user_id = ?'
-    ).bind(userId).run();
+      'UPDATE user_settings SET api_key_encrypted = NULL, updated_at = ? WHERE user_id = ?'
+    ).bind(now, userId).run();
     
     return c.json({ success: true, message: 'API key deleted' });
   } catch (error) {

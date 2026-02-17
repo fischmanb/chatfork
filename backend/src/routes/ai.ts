@@ -6,9 +6,19 @@ export const aiRouter = new Hono<{ Bindings: Env }>();
 
 aiRouter.use('*', authMiddleware);
 
+/**
+ * Helper to generate auto-title from first user message
+ * Takes first 40 chars and adds ellipsis if needed
+ */
+function generateAutoTitle(content: string): string {
+  const trimmed = content.trim();
+  if (trimmed.length <= 40) return trimmed;
+  return trimmed.slice(0, 40) + '...';
+}
+
 aiRouter.post('/chat', async (c) => {
   const userId = c.get('userId');
-  const { messages, conversationId, branchId } = await c.req.json();
+  const { messages, conversationId, branchId, isFirstMessage } = await c.req.json();
   
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return c.json({ error: 'Messages are required' }, 400);
@@ -70,7 +80,17 @@ aiRouter.post('/chat', async (c) => {
            VALUES (?, ?, ?, 'assistant', ?, ?, datetime('now'))`
         ).bind(assistantMessageId, conversationId, branchId || null, data.choices[0]?.message?.content || '', lastUserMessage?.id || null).run();
         savedMessageId = assistantMessageId;
-        await c.env.DB.prepare('UPDATE conversations SET updated_at = datetime("now") WHERE id = ?').bind(conversationId).run();
+        
+        // Auto-rename conversation on first message if requested
+        if (isFirstMessage && lastUserMessage?.role === 'user') {
+          const newTitle = generateAutoTitle(lastUserMessage.content);
+          await c.env.DB.prepare(
+            'UPDATE conversations SET title = ?, updated_at = datetime("now") WHERE id = ?'
+          ).bind(newTitle, conversationId).run();
+        } else {
+          // Just update the timestamp
+          await c.env.DB.prepare('UPDATE conversations SET updated_at = datetime("now") WHERE id = ?').bind(conversationId).run();
+        }
       } catch (dbError) {
         console.error('Failed to save message:', dbError);
       }

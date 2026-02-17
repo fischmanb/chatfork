@@ -55,22 +55,22 @@ authRouter.post('/signup', async (c) => {
     const salt = generateToken().slice(0, 16);
     const passwordHash = await hashPassword(password, salt);
     
-    // Create user
+    // Create user with ISO timestamp
     const userId = crypto.randomUUID();
+    const now = new Date().toISOString();
     await c.env.DB.prepare(
       `INSERT INTO users (id, email, password_hash, name, created_at)
-       VALUES (?, ?, ?, ?, datetime('now'))`
-    ).bind(userId, email, passwordHash, name || null).run();
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(userId, email, passwordHash, name || null, now).run();
     
-    // Create session
+    // Create session with ISO timestamp (7 days expiry)
     const token = generateToken();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     await c.env.DB.prepare(
       `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
-       VALUES (?, ?, ?, ?, datetime('now'))`
-    ).bind(crypto.randomUUID(), userId, token, expiresAt.toISOString()).run();
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), userId, token, expiresAt, now).run();
     
     return c.json({
       token,
@@ -111,15 +111,15 @@ authRouter.post('/login', async (c) => {
       return c.json({ error: 'Invalid credentials' }, 401);
     }
     
-    // Create session
+    // Create session with ISO timestamp (7 days expiry)
     const token = generateToken();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     
     await c.env.DB.prepare(
       `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
-       VALUES (?, ?, ?, ?, datetime('now'))`
-    ).bind(crypto.randomUUID(), user.id, token, expiresAt.toISOString()).run();
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(crypto.randomUUID(), user.id, token, expiresAt, now).run();
     
     return c.json({
       token,

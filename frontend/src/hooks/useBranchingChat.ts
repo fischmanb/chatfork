@@ -45,7 +45,7 @@ interface UseBranchingChatReturn {
   renameConversation: (conversationId: string, title: string) => Promise<void>;
   loadConversations: () => Promise<void>;
   loadConversation: (conversationId: string) => Promise<void>;
-  sendUserMessage: (content: string) => Promise<string | null>;
+  sendUserMessage: (content: string) => Promise<{ conversationId: string | null; isFirstMessage: boolean }>;
   forkBranch: (messageId: string, branchName?: string) => Promise<string | null>;
   newThreadFromMessage: (messageId: string, threadName: string) => Promise<string | null>;
   switchBranch: (branchId: string) => void;
@@ -276,16 +276,18 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     }
   }, [getToken, loadConversations]);
 
-  const sendUserMessage = useCallback(async (content: string): Promise<string | null> => {
+  const sendUserMessage = useCallback(async (content: string): Promise<{ conversationId: string | null; isFirstMessage: boolean }> => {
     const token = getToken();
     if (!token) {
       setState(prev => ({ ...prev, error: 'Not authenticated' }));
-      return null;
+      return { conversationId: null, isFirstMessage: false };
     }
 
     let conversationId = state.currentConversationId;
     let branchId = state.currentBranchId;
+    let isFirstMessage = false;
 
+    // Create new conversation if none exists
     if (!conversationId) {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
       try {
@@ -301,6 +303,7 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
           const createData = await createRes.json();
           conversationId = createData.conversationId;
           branchId = createData.branchId;
+          isFirstMessage = true;
           setState(prev => ({
             ...prev,
             branches: [{
@@ -316,13 +319,18 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
         } else {
           const errorData = await createRes.json().catch(() => ({}));
           setState(prev => ({ ...prev, isLoading: false, error: errorData.error || 'Failed to create conversation' }));
-          return null;
+          return { conversationId: null, isFirstMessage: false };
         }
       } catch (error) {
         console.error('Error creating conversation:', error);
         setState(prev => ({ ...prev, isLoading: false, error: 'Network error. Please try again.' }));
-        return null;
+        return { conversationId: null, isFirstMessage: false };
       }
+    }
+
+    // Check if this is the first message in an existing conversation
+    if (state.messages.length === 0) {
+      isFirstMessage = true;
     }
 
     const userMessageId = crypto.randomUUID();
@@ -353,6 +361,7 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
           messages: [...state.messages, userMessage].map(m => ({ role: m.role, content: m.content, id: m.id })),
           conversationId,
           branchId,
+          isFirstMessage, // Tell backend to auto-rename if this is the first message
         }),
       });
 
@@ -368,7 +377,7 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
         };
         setState(prev => ({ ...prev, messages: [...prev.messages, assistantMessage], isLoading: false }));
         await loadConversations();
-        return conversationId;
+        return { conversationId, isFirstMessage };
       } else {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
@@ -376,12 +385,12 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
           setApiKeyError(errorData.error || 'API key issue. Please check your settings.');
         }
         setState(prev => ({ ...prev, isLoading: false, error: errorData.error || `Error: ${response.status}` }));
-        return conversationId;
+        return { conversationId, isFirstMessage: false };
       }
     } catch (error) {
       console.error('Error sending message:', error);
       setState(prev => ({ ...prev, isLoading: false, error: 'Network error. Please try again.' }));
-      return conversationId;
+      return { conversationId, isFirstMessage: false };
     }
   }, [getToken, state.currentConversationId, state.currentBranchId, state.messages, loadConversations]);
 

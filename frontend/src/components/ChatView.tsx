@@ -22,7 +22,6 @@ export function ChatView({ getToken }: ChatViewProps) {
     forkBranch,
     switchBranch,
     createNewConversation,
-    loadConversations,
   } = useBranchingChat(getToken);
 
   // Auto-scroll to latest message
@@ -35,30 +34,8 @@ export function ChatView({ getToken }: ChatViewProps) {
     const content = input.trim();
     setInput('');
     
-    const wasFirstMessage = state.messages.length === 0;
+    // Send message - backend handles auto-naming on first message
     await sendUserMessage(content);
-    
-    // Auto-rename conversation after first user message
-    if (wasFirstMessage && state.currentConversationId) {
-      const newTitle = content.length > 30 ? content.slice(0, 30) + '...' : content;
-      try {
-        const token = getToken();
-        if (token) {
-          await fetch(`${API_URL}/ai/conversations/${state.currentConversationId}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ title: newTitle }),
-          });
-          // Reload conversations to show new name
-          await loadConversations();
-        }
-      } catch (err) {
-        console.error('Failed to rename conversation:', err);
-      }
-    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
