@@ -72,23 +72,18 @@ export function ChatView({ getToken }: ChatViewProps) {
     }
   };
 
-  // Robust date parsing that handles multiple formats
+  // Parse UTC timestamp and convert to local time
   const parseDate = (timestamp: string | null | undefined): Date | null => {
     if (!timestamp) return null;
     try {
-      // Try parsing as ISO string first
-      let date = new Date(timestamp);
-      if (!isNaN(date.getTime())) return date;
-      
-      // Try with Z appended
-      date = new Date(timestamp + 'Z');
-      if (!isNaN(date.getTime())) return date;
-      
-      // Try SQLite format (2024-01-15 10:30:00)
-      if (timestamp.includes(' ')) {
-        date = new Date(timestamp.replace(' ', 'T') + 'Z');
-        if (!isNaN(date.getTime())) return date;
+      // Ensure timestamp is treated as UTC by appending Z if not present
+      let utcTimestamp = timestamp;
+      if (!timestamp.endsWith('Z') && !timestamp.match(/[+-]\d{2}:\d{2}$/)) {
+        utcTimestamp = timestamp + 'Z';
       }
+      
+      const date = new Date(utcTimestamp);
+      if (!isNaN(date.getTime())) return date;
       
       return null;
     } catch {
