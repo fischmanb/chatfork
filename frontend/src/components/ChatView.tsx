@@ -162,15 +162,29 @@ export function ChatView({ getToken }: ChatViewProps) {
                 <div className="mt-2 ml-4 space-y-1 border-l-2 border-slate-700/50 pl-3">
                   {state.branches.map((branch) => {
                     const isMainBranch = !branch.parentBranchId;
+                    const isActive = state.currentBranchId === branch.id;
                     const displayName = isMainBranch 
                       ? (state.conversations.find(c => c.id === state.currentConversationId)?.title || branch.name)
                       : branch.name;
                     
                     return (
-                      <button key={branch.id} onClick={() => switchBranch(branch.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2 ${state.currentBranchId === branch.id ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
-                        <GitBranch className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate flex-1">{displayName}</span>
-                        {isMainBranch && <span className="text-[10px] px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 rounded">MAIN</span>}
+                      <button key={branch.id} onClick={() => switchBranch(branch.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isActive ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'}`}>
+                        <div className="flex items-center gap-2">
+                          <GitBranch className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate flex-1">{displayName}</span>
+                          {isMainBranch && <span className="text-[10px] px-1.5 py-0.5 bg-indigo-500/30 text-indigo-300 rounded">MAIN</span>}
+                          {isActive && <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/30 text-emerald-300 rounded">ACTIVE</span>}
+                        </div>
+                        {(branch.messageCount !== undefined || branch.lastActivity) && (
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-500">
+                            {branch.messageCount !== undefined && (
+                              <span>{branch.messageCount} message{branch.messageCount !== 1 ? 's' : ''}</span>
+                            )}
+                            {branch.lastActivity && (
+                              <span>• {formatDate(branch.lastActivity)}</span>
+                            )}
+                          </div>
+                        )}
                       </button>
                     );
                   })}
@@ -248,7 +262,14 @@ export function ChatView({ getToken }: ChatViewProps) {
             </button>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">ChatFork</h1>
-              <p className="text-xs text-slate-500">{state.branches.find((b) => b.id === state.currentBranchId)?.name || 'Chat'}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">
+                  {state.branches.find((b) => b.id === state.currentBranchId)?.name || 'Chat'}
+                </span>
+                {state.currentBranchId && state.branches.find((b) => b.id === state.currentBranchId)?.parentBranchId && (
+                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">FORK</span>
+                )}
+              </div>
             </div>
           </div>
           
