@@ -437,24 +437,37 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
       });
       if (response.ok) {
         const data = await response.json();
-        const branchesRes = await fetch(`${API_URL}/ai/conversations/${state.currentConversationId}/branches`, {
+        const newBranchId = data.branchId;
+        const conversationId = state.currentConversationId;
+        
+        // Reload branches
+        const branchesRes = await fetch(`${API_URL}/ai/conversations/${conversationId}/branches`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         if (branchesRes.ok) {
           const branchesData = await branchesRes.json();
+          const branches: Branch[] = (branchesData.branches || []).map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            parentBranchId: b.parent_branch_id,
+            forkedFromMessageId: b.forked_from_message_id,
+            createdAt: b.created_at,
+            messageCount: b.message_count,
+            lastActivity: b.last_activity,
+          }));
+          
+          // Load messages for the new fork branch
+          const messages = await loadBranchMessages(conversationId, newBranchId);
+          
           setState(prev => ({
             ...prev,
-            branches: (branchesData.branches || []).map((b: any) => ({
-              id: b.id,
-              name: b.name,
-              parentBranchId: b.parent_branch_id,
-              forkedFromMessageId: b.forked_from_message_id,
-              createdAt: b.created_at,
-            })),
-            currentBranchId: data.branchId,
+            branches,
+            currentBranchId: newBranchId,
+            messages,
           }));
         }
-        return data.branchId;
+        return newBranchId;
       } else {
         const errorData = await response.json().catch(() => ({}));
         setState(prev => ({ ...prev, error: errorData.error || 'Failed to fork branch' }));
@@ -465,7 +478,7 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
       setState(prev => ({ ...prev, error: 'Network error. Please try again.' }));
       return null;
     }
-  }, [getToken, state.currentConversationId]);
+  }, [getToken, state.currentConversationId, loadBranchMessages]);
 
   // Create a new top-level thread from a message (no parent branch)
   const newThreadFromMessage = useCallback(async (messageId: string, threadName: string): Promise<string | null> => {
