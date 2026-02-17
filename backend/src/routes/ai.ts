@@ -106,13 +106,54 @@ aiRouter.post('/chat', async (c) => {
 aiRouter.get('/conversations/:id/messages', async (c) => {
   const userId = c.get('userId');
   const conversationId = c.req.param('id');
+  const branchId = c.req.query('branchId');
+  
   try {
     const conversation = await c.env.DB.prepare('SELECT id FROM conversations WHERE id = ? AND user_id = ?').bind(conversationId, userId).first();
     if (!conversation) return c.json({ error: 'Conversation not found' }, 404);
-    const messages = await c.env.DB.prepare(
-      `SELECT id, branch_id, role, content, parent_message_id, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC`
-    ).bind(conversationId).all();
-    return c.json({ messages: messages.results || [] });
+    
+    // If no branchId specified, get all messages for the main branch (null parent_branch_id)
+    if (!branchId) {
+      const messages = await c.env.DB.prepare(
+        `SELECT id, branch_id, role, content, parent_message_id, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC`
+      ).bind(conversationId).all();
+      return c.json({ messages: messages.results || [] });
+    }
+    
+    // Get branch info to check for parent
+    const branch = await c.env.DB.prepare(
+      'SELECT id, parent_branch_id, forked_from_message_id FROM branches WHERE id = ? AND conversation_id = ?'
+    ).bind(branchId, conversationId).first();
+    
+    if (!branch) return c.json({ error: 'Branch not found' }, 404);
+    
+    let messages: any[] = [];
+    
+    // If branch has a parent, get inherited messages up to fork point
+    if (branch.parent_branch_id && branch.forked_from_message_id) {
+      // Get parent messages up to and including the forked message
+      const parentMessages = await c.env.DB.prepare(
+        `SELECT id, branch_id, role, content, parent_message_id, created_at 
+         FROM messages 
+         WHERE branch_id = ? 
+         AND created_at <= (SELECT created_at FROM messages WHERE id = ?)
+         ORDER BY created_at ASC`
+      ).bind(branch.parent_branch_id, branch.forked_from_message_id).all();
+      
+      messages = [...(parentMessages.results || [])];
+    }
+    
+    // Get messages belonging to this branch
+    const branchMessages = await c.env.DB.prepare(
+      `SELECT id, branch_id, role, content, parent_message_id, created_at 
+       FROM messages 
+       WHERE branch_id = ? 
+       ORDER BY created_at ASC`
+    ).bind(branchId).all();
+    
+    messages = [...messages, ...(branchMessages.results || [])];
+    
+    return c.json({ messages });
   } catch (error) {
     console.error('Error fetching messages:', error);
     return c.json({ error: 'Failed to fetch messages' }, 500);
@@ -125,9 +166,22 @@ aiRouter.get('/conversations/:id/branches', async (c) => {
   try {
     const conversation = await c.env.DB.prepare('SELECT id FROM conversations WHERE id = ? AND user_id = ?').bind(conversationId, userId).first();
     if (!conversation) return c.json({ error: 'Conversation not found' }, 404);
+    
+    // Get branches with message count and last activity
     const branches = await c.env.DB.prepare(
-      `SELECT id, parent_branch_id, name, forked_from_message_id, created_at FROM branches WHERE conversation_id = ? ORDER BY created_at ASC`
+      `SELECT 
+        b.id, 
+        b.parent_branch_id, 
+        b.name, 
+        b.forked_from_message_id, 
+        b.created_at,
+        (SELECT COUNT(*) FROM messages WHERE branch_id = b.id) as message_count,
+        (SELECT MAX(created_at) FROM messages WHERE branch_id = b.id) as last_activity
+       FROM branches b 
+       WHERE b.conversation_id = ? 
+       ORDER BY b.created_at ASC`
     ).bind(conversationId).all();
+    
     return c.json({ branches: branches.results || [] });
   } catch (error) {
     console.error('Error fetching branches:', error);
@@ -175,12 +229,47 @@ aiRouter.post('/fork', async (c) => {
   try {
     const conversation = await c.env.DB.prepare('SELECT id FROM conversations WHERE id = ? AND user_id = ?').bind(conversationId, userId).first();
     if (!conversation) return c.json({ error: 'Conversation not found' }, 404);
-    const parentMessage = await c.env.DB.prepare('SELECT branch_id FROM messages WHERE id = ? AND conversation_id = ?').bind(parentMessageId, conversationId).first();
+    
+    const parentMessage = await c.env.DB.prepare(
+      'SELECT branch_id, created_at FROM messages WHERE id = ? AND conversation_id = ?'
+    ).bind(parentMessageId, conversationId).first();
+    
     if (!parentMessage) return c.json({ error: 'Parent message not found' }, 404);
+    
     const newBranchId = crypto.randomUUID();
+    
+    // Create the new branch
     await c.env.DB.prepare(
-      `INSERT INTO branches (id, conversation_id, parent_branch_id, forked_from_message_id, name, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`
+      `INSERT INTO branches (id, conversation_id, parent_branch_id, forked_from_message_id, name, created_at) 
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`
     ).bind(newBranchId, conversationId, parentMessage.branch_id, parentMessageId, branchName || `Branch from message`).run();
+    
+    // Copy parent messages up to and including the forked message to the new branch
+    const messagesToCopy = await c.env.DB.prepare(
+      `SELECT id, role, content, parent_message_id, created_at 
+       FROM messages 
+       WHERE branch_id = ? 
+       AND created_at <= ?
+       ORDER BY created_at ASC`
+    ).bind(parentMessage.branch_id, parentMessage.created_at).all();
+    
+    // Insert copied messages with new IDs but preserve the content and relationships
+    for (const msg of (messagesToCopy.results || [])) {
+      const newMessageId = crypto.randomUUID();
+      await c.env.DB.prepare(
+        `INSERT INTO messages (id, conversation_id, branch_id, role, content, parent_message_id, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        newMessageId,
+        conversationId,
+        newBranchId,
+        msg.role,
+        msg.content,
+        msg.parent_message_id ? crypto.randomUUID() : null, // Generate new parent ID reference
+        msg.created_at
+      ).run();
+    }
+    
     return c.json({ branchId: newBranchId, message: 'Branch created' });
   } catch (error) {
     console.error('Error forking branch:', error);
