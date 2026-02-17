@@ -9,8 +9,6 @@ interface ChatViewProps {
   getToken: () => string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://chatfork-api.lively-block-6291.workers.dev';
-
 export function ChatView({ getToken }: ChatViewProps) {
   const [input, setInput] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
