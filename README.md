@@ -98,7 +98,7 @@ chatfork/
 |--------|----------|-------------|
 | POST | `/ai/conversations` | Create conversation |
 | GET | `/ai/conversations` | List all conversations |
-| PATCH | `/ai/conversations/:id` | Rename conversation |
+| PUT | `/ai/conversations/:id` | Rename conversation |
 | GET | `/ai/conversations/:id/messages` | Get messages |
 | GET | `/ai/conversations/:id/branches` | Get branches |
 
