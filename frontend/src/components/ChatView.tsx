@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useBranchingChat } from '../hooks/useBranchingChat';
-import { GitBranch, MessageSquare, Plus, Send, Loader2, Sparkles, Trash2, AlertTriangle, LogOut } from 'lucide-react';
+import { GitBranch, MessageSquare, Plus, Send, Loader2, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
 
 interface ChatViewProps {
   userEmail: string;
