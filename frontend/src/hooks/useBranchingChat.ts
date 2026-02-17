@@ -188,9 +188,9 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     }
   }, [getToken]);
 
-  const loadBranchMessages = useCallback(async (conversationId: string, branchId: string) => {
+  const loadBranchMessages = useCallback(async (conversationId: string, branchId: string): Promise<Message[]> => {
     const token = getToken();
-    if (!token) return;
+    if (!token) return [];
     try {
       const response = await fetch(`${API_URL}/ai/conversations/${conversationId}/messages?branchId=${branchId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -239,11 +239,11 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
         const mainBranch = branches.find(b => !b.parentBranchId) || branches[0];
         
         // Load messages for main branch
-        const messages: Message[] = mainBranch ? await loadBranchMessages(conversationId, mainBranch.id) : [];
+        const branchMessages = mainBranch ? await loadBranchMessages(conversationId, mainBranch.id) : [];
         
         setState(prev => ({
           ...prev,
-          messages: messages || [],
+          messages: branchMessages,
           branches,
           currentConversationId: conversationId,
           currentBranchId: mainBranch?.id || null,
@@ -578,12 +578,12 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
     setState(prev => ({ ...prev, isLoading: true }));
     
     // Load messages for the selected branch
-    const messages: Message[] = await loadBranchMessages(conversationId, branchId);
+    const branchMessages = await loadBranchMessages(conversationId, branchId);
     
     setState(prev => ({
       ...prev,
       currentBranchId: branchId,
-      messages: messages || [],
+      messages: branchMessages,
       isLoading: false,
     }));
   }, [state.currentConversationId, loadBranchMessages]);
