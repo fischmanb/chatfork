@@ -45,7 +45,7 @@ export function ChatView({ getToken }: ChatViewProps) {
         const token = getToken();
         if (token) {
           await fetch(`${API_URL}/ai/conversations/${state.currentConversationId}`, {
-            method: 'PATCH',
+            method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
