@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, GitBranch, Sparkles, Zap, Shield, ArrowRight, Github, Twitter, X } from 'lucide-react';
+import { GitBranch, Sparkles, Zap, Shield, ArrowRight, Github, X } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
