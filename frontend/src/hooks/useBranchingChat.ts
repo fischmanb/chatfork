@@ -154,9 +154,8 @@ export function useBranchingChat(getToken: () => string | null): UseBranchingCha
         const data = await response.json();
         const conversations = data.conversations || [];
         setState(prev => ({ ...prev, conversations }));
-        if (conversations.length > 0) {
-          await loadConversation(conversations[0].id);
-        }
+        // Note: We do NOT switch to the first conversation here.
+        // This function only updates the list. Use loadConversation() to switch.
       }
     } catch (error) {
       console.error('Error loading conversations:', error);
