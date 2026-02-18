@@ -46,7 +46,6 @@ function MergeIcon({ className }: { className?: string }) {
 export function LandingPage({ onGetStarted }: LandingPageProps) {
   const mainRef = useRef<HTMLDivElement>(null);
   const [currentSection, setCurrentSection] = useState(0);
-  const isScrolling = useRef(false);
   const sectionTriggers = useRef<ScrollTrigger[]>([]);
 
   const sections = ['hero', 'features', 'split', 'merge', 'keyboard', 'pricing', 'cta'];
