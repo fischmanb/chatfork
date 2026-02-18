@@ -72,27 +72,28 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         });
 
         if (isHero) {
-          // Hero: just exit animation (already visible)
+          // Hero: stay visible until very end, then quick exit
+          tl.to(items, { 
+            y: -100, 
+            opacity: 0, 
+            duration: 0.1,
+            ease: 'power2.in'
+          }, 0.9);
+        } else {
+          // Enter (0-15%), SETTLE (15-90%) - fully visible, exit (90-100%)
+          tl.fromTo(items, 
+            { y: 80, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.15, stagger: 0.03, ease: 'power2.out' },
+            0
+          );
+          // Exit only at the very end
           tl.to(items, { 
             y: -80, 
             opacity: 0, 
-            duration: 0.3,
+            duration: 0.1, 
+            stagger: 0.02,
             ease: 'power2.in'
-          }, 0.7);
-        } else {
-          // Other sections: enter, settle, exit
-          tl.fromTo(items, 
-            { y: 60, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.25, stagger: 0.05, ease: 'power2.out' },
-            0
-          );
-          tl.to(items, { 
-            y: -60, 
-            opacity: 0, 
-            duration: 0.25, 
-            stagger: 0.03,
-            ease: 'power2.in'
-          }, 0.75);
+          }, 0.9);
         }
       });
 
