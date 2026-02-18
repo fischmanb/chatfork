@@ -63,205 +63,253 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   }, []);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Kill any existing triggers
-      sectionTriggers.current.forEach(st => st.kill());
-      sectionTriggers.current = [];
+    // Kill any existing triggers
+    sectionTriggers.current.forEach(st => st.kill());
+    sectionTriggers.current = [];
 
-      // On mobile, disable complex scroll animations and show content normally
-      if (isMobile) {
-        // Make all content visible on mobile
-        gsap.set('.animate-item, .split-left, .split-right, .merge-left, .merge-right', { 
-          opacity: 1, x: 0, y: 0, scale: 1 
-        });
-        return;
-      }
-
-      // Desktop: Create pinned sections with proper animation ranges
-      const createSectionAnimation = (
-        sectionClass: string,
-        enterAnimation: gsap.TweenVars,
-        exitAnimation: gsap.TweenVars
-      ) => {
-        const section = document.querySelector(sectionClass);
-        if (!section) return;
-
-        // Set initial state (hidden)
-        gsap.set(section.querySelectorAll('.animate-item'), { ...enterAnimation, opacity: 0 });
-
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: 'top top',
-            end: '+=130%',
-            pin: true,
-            scrub: 0.3,
-            onUpdate: (self) => {
-              const progress = self.progress;
-              const sectionIndex = sections.findIndex(s => sectionClass.includes(s));
-              
-              if (progress > 0.1 && progress < 0.9) {
-                setCurrentSection(sectionIndex);
-              }
-            }
-          }
-        });
-
-        // ENTRANCE: 0% to 30%
-        tl.fromTo(
-          section.querySelectorAll('.animate-item'),
-          { ...enterAnimation, opacity: 0 },
-          { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' },
-          0
-        );
-
-        // EXIT: 70% to 100%
-        tl.to(
-          section.querySelectorAll('.animate-item'),
-          { ...exitAnimation, opacity: 0, duration: 0.3, stagger: 0.03, ease: 'power2.in' },
-          0.7
-        );
-
-        if (tl.scrollTrigger) {
-          sectionTriggers.current.push(tl.scrollTrigger);
+    // MOBILE: Use CSS animations with IntersectionObserver (works reliably on iOS)
+    if (isMobile) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .animate-on-scroll {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                      transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
-      };
-
-      // Hero
-      createSectionAnimation('.section-hero',
-        { y: 80, scale: 0.95 },
-        { y: -100, scale: 1.05 }
-      );
-
-      // Features
-      createSectionAnimation('.section-features',
-        { y: 100 },
-        { y: -120 }
-      );
-
-      // Split
-      const splitSection = document.querySelector('.section-split');
-      if (splitSection) {
-        gsap.set(splitSection.querySelectorAll('.split-left'), { x: -150, opacity: 0 });
-        gsap.set(splitSection.querySelectorAll('.split-right'), { x: 150, opacity: 0 });
-
-        const splitTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: splitSection,
-            start: 'top top',
-            end: '+=130%',
-            pin: true,
-            scrub: 0.3,
-            onUpdate: (self) => {
-              if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(2);
-            }
-          }
-        });
-
-        splitTl.to(splitSection.querySelectorAll('.split-left'), 
-          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
-        splitTl.to(splitSection.querySelectorAll('.split-right'), 
-          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
-
-        splitTl.to(splitSection.querySelectorAll('.split-left'), 
-          { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
-        splitTl.to(splitSection.querySelectorAll('.split-right'), 
-          { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
-
-        if (splitTl.scrollTrigger) sectionTriggers.current.push(splitTl.scrollTrigger);
-      }
-
-      // Merge
-      const mergeSection = document.querySelector('.section-merge');
-      if (mergeSection) {
-        gsap.set(mergeSection.querySelectorAll('.merge-left'), { x: -150, opacity: 0 });
-        gsap.set(mergeSection.querySelectorAll('.merge-right'), { x: 150, opacity: 0 });
-
-        const mergeTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: mergeSection,
-            start: 'top top',
-            end: '+=130%',
-            pin: true,
-            scrub: 0.3,
-            onUpdate: (self) => {
-              if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(3);
-            }
-          }
-        });
-
-        mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
-          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
-        mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
-          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
-
-        mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
-          { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
-        mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
-          { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
-
-        if (mergeTl.scrollTrigger) sectionTriggers.current.push(mergeTl.scrollTrigger);
-      }
-
-      // Keyboard
-      createSectionAnimation('.section-keyboard',
-        { y: 80, scale: 0.9 },
-        { y: -100, scale: 1.1 }
-      );
-
-      // Pricing
-      createSectionAnimation('.section-pricing',
-        { y: 100 },
-        { y: -100 }
-      );
-
-      // CTA
-      const ctaSection = document.querySelector('.section-cta');
-      if (ctaSection) {
-        gsap.set(ctaSection.querySelectorAll('.animate-item'), { y: 60, opacity: 0 });
-
-        const ctaTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: ctaSection,
-            start: 'top top',
-            end: '+=100%',
-            pin: true,
-            scrub: 0.3,
-            onUpdate: (self) => {
-              if (self.progress > 0.1) setCurrentSection(6);
-            }
-          }
-        });
-
-        ctaTl.to(ctaSection.querySelectorAll('.animate-item'), 
-          { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, 0);
-
-        if (ctaTl.scrollTrigger) sectionTriggers.current.push(ctaTl.scrollTrigger);
-      }
-
-      // GLOBAL SNAP - Desktop only
-      ScrollTrigger.create({
-        snap: {
-          snapTo: (progress) => {
-            const sectionProgress = 1 / totalSections;
-            const rawSection = progress / sectionProgress;
-            const section = Math.round(rawSection);
-            const clampedSection = Math.max(0, Math.min(section, totalSections - 1));
-            return clampedSection * sectionProgress;
-          },
-          duration: { min: 0.2, max: 0.4 },
-          delay: 0,
-          ease: 'power2.inOut'
+        .animate-on-scroll.animate-left {
+          transform: translateX(-60px);
         }
+        .animate-on-scroll.animate-right {
+          transform: translateX(60px);
+        }
+        .animate-on-scroll.is-visible {
+          opacity: 1;
+          transform: translateY(0) translateX(0);
+        }
+      `;
+      document.head.appendChild(style);
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -10% 0px' });
+
+      document.querySelectorAll('.animate-item').forEach(el => {
+        el.classList.add('animate-on-scroll');
+        observer.observe(el);
+      });
+      document.querySelectorAll('.split-left, .merge-left').forEach(el => {
+        el.classList.add('animate-on-scroll', 'animate-left');
+        observer.observe(el);
+      });
+      document.querySelectorAll('.split-right, .merge-right').forEach(el => {
+        el.classList.add('animate-on-scroll', 'animate-right');
+        observer.observe(el);
       });
 
-    }, mainRef);
+      return () => {
+        observer.disconnect();
+        style.remove();
+      };
+    }
 
-    return () => {
-      sectionTriggers.current.forEach(st => st.kill());
-      ctx.revert();
-    };
-  }, [isMobile]);
+    // DESKTOP: Use GSAP ScrollTrigger with pinning
+    const ctx = gsap.context(() => {
+      // DESKTOP: Pinned sections with scrub animations
+        const createSectionAnimation = (
+          sectionClass: string,
+          enterAnimation: gsap.TweenVars,
+          exitAnimation: gsap.TweenVars,
+          isFirst = false
+        ) => {
+          const section = document.querySelector(sectionClass);
+          if (!section) return;
+
+          // Set initial state - hero starts visible, others hidden
+          if (isFirst) {
+            gsap.set(section.querySelectorAll('.animate-item'), { opacity: 1, x: 0, y: 0, scale: 1 });
+          } else {
+            gsap.set(section.querySelectorAll('.animate-item'), { ...enterAnimation, opacity: 0 });
+          }
+
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: section,
+              start: 'top top',
+              end: '+=130%',
+              pin: true,
+              scrub: 0.3,
+              onUpdate: (self) => {
+                const progress = self.progress;
+                const sectionIndex = sections.findIndex(s => sectionClass.includes(s));
+                
+                if (progress > 0.1 && progress < 0.9) {
+                  setCurrentSection(sectionIndex);
+                }
+              }
+            }
+          });
+
+          // ENTRANCE: 0% to 30%
+          tl.fromTo(
+            section.querySelectorAll('.animate-item'),
+            { ...enterAnimation, opacity: 0 },
+            { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' },
+            0
+          );
+
+          // EXIT: 70% to 100%
+          tl.to(
+            section.querySelectorAll('.animate-item'),
+            { ...exitAnimation, opacity: 0, duration: 0.3, stagger: 0.03, ease: 'power2.in' },
+            0.7
+          );
+
+          if (tl.scrollTrigger) {
+            sectionTriggers.current.push(tl.scrollTrigger);
+          }
+        };
+
+        // Hero (first section - starts visible)
+        createSectionAnimation('.section-hero',
+          { y: 80, scale: 0.95 },
+          { y: -100, scale: 1.05 },
+          true
+        );
+
+        // Features
+        createSectionAnimation('.section-features',
+          { y: 100 },
+          { y: -120 }
+        );
+
+        // Split
+        const splitSection = document.querySelector('.section-split');
+        if (splitSection) {
+          gsap.set(splitSection.querySelectorAll('.split-left'), { x: -150, opacity: 0 });
+          gsap.set(splitSection.querySelectorAll('.split-right'), { x: 150, opacity: 0 });
+
+          const splitTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: splitSection,
+              start: 'top top',
+              end: '+=130%',
+              pin: true,
+              scrub: 0.3,
+              onUpdate: (self) => {
+                if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(2);
+              }
+            }
+          });
+
+          splitTl.to(splitSection.querySelectorAll('.split-left'), 
+            { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
+          splitTl.to(splitSection.querySelectorAll('.split-right'), 
+            { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
+
+          splitTl.to(splitSection.querySelectorAll('.split-left'), 
+            { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+          splitTl.to(splitSection.querySelectorAll('.split-right'), 
+            { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+
+          if (splitTl.scrollTrigger) sectionTriggers.current.push(splitTl.scrollTrigger);
+        }
+
+        // Merge
+        const mergeSection = document.querySelector('.section-merge');
+        if (mergeSection) {
+          gsap.set(mergeSection.querySelectorAll('.merge-left'), { x: -150, opacity: 0 });
+          gsap.set(mergeSection.querySelectorAll('.merge-right'), { x: 150, opacity: 0 });
+
+          const mergeTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: mergeSection,
+              start: 'top top',
+              end: '+=130%',
+              pin: true,
+              scrub: 0.3,
+              onUpdate: (self) => {
+                if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(3);
+              }
+            }
+          });
+
+          mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
+            { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
+          mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
+            { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
+
+          mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
+            { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+          mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
+            { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+
+          if (mergeTl.scrollTrigger) sectionTriggers.current.push(mergeTl.scrollTrigger);
+        }
+
+        // Keyboard
+        createSectionAnimation('.section-keyboard',
+          { y: 80, scale: 0.9 },
+          { y: -100, scale: 1.1 }
+        );
+
+        // Pricing
+        createSectionAnimation('.section-pricing',
+          { y: 100 },
+          { y: -100 }
+        );
+
+        // CTA
+        const ctaSection = document.querySelector('.section-cta');
+        if (ctaSection) {
+          gsap.set(ctaSection.querySelectorAll('.animate-item'), { y: 60, opacity: 0 });
+
+          const ctaTl = gsap.timeline({
+            scrollTrigger: {
+              trigger: ctaSection,
+              start: 'top top',
+              end: '+=100%',
+              pin: true,
+              scrub: 0.3,
+              onUpdate: (self) => {
+                if (self.progress > 0.1) setCurrentSection(6);
+              }
+            }
+          });
+
+          ctaTl.to(ctaSection.querySelectorAll('.animate-item'), 
+            { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, 0);
+
+          if (ctaTl.scrollTrigger) sectionTriggers.current.push(ctaTl.scrollTrigger);
+        }
+
+        // GLOBAL SNAP - Desktop only
+        ScrollTrigger.create({
+          snap: {
+            snapTo: (progress) => {
+              const sectionProgress = 1 / totalSections;
+              const rawSection = progress / sectionProgress;
+              const section = Math.round(rawSection);
+              const clampedSection = Math.max(0, Math.min(section, totalSections - 1));
+              return clampedSection * sectionProgress;
+            },
+            duration: { min: 0.2, max: 0.4 },
+            delay: 0,
+            ease: 'power2.inOut'
+          }
+        });
+      }, mainRef);
+
+      return () => {
+        sectionTriggers.current.forEach(st => st.kill());
+        ctx.revert();
+      };
+    }, [isMobile]);
 
   const scrollToSection = (index: number) => {
     if (index < 0 || index >= totalSections) return;
@@ -307,7 +355,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </div>
 
       {/* HERO SECTION */}
-      <section className="section-hero relative min-h-screen md:h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-0">
+      <section className="section-hero relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center overflow-hidden pt-16 md:pt-0">
         <div className="animate-item absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1920&q=80" 
@@ -392,7 +440,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* FEATURES SECTION */}
-      <section className="section-features relative min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
+      <section className="section-features relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 w-full">
           <h2 className="animate-item text-2xl sm:text-3xl md:text-5xl font-light text-center mb-8 md:mb-20 text-white">
             Three moves. Total control.
@@ -417,7 +465,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* SPLIT SECTION */}
-      <section className="section-split relative min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
+      <section className="section-split relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 w-full">
           <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="split-left order-2 md:order-1">
@@ -467,7 +515,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* MERGE SECTION */}
-      <section className="section-merge relative min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
+      <section className="section-merge relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
         <div className="max-w-7xl mx-auto px-4 md:px-6 w-full">
           <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             <div className="merge-left bg-[#141414] border border-white/5 rounded-xl md:rounded-2xl p-4 md:p-6">
@@ -529,7 +577,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* KEYBOARD SECTION */}
-      <section className="section-keyboard relative min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
+      <section className="section-keyboard relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
         <div className="max-w-4xl mx-auto px-4 md:px-6 w-full text-center">
           <h2 className="animate-item text-2xl sm:text-3xl md:text-5xl font-light mb-4 md:mb-6 text-white">
             Keyboard-first. No friction.
@@ -563,7 +611,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* PRICING SECTION */}
-      <section className="section-pricing relative min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
+      <section className="section-pricing relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center bg-black py-12 md:py-0">
         <div className="max-w-5xl mx-auto px-4 md:px-6 w-full">
           <h2 className="animate-item text-2xl sm:text-3xl md:text-5xl font-light text-center mb-4 md:mb-6 text-white">
             Simple plans.
@@ -624,7 +672,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="section-cta relative min-h-screen md:h-screen flex items-center justify-center overflow-hidden py-12 md:py-0">
+      <section className="section-cta relative min-h-[100dvh] min-h-screen md:h-screen flex items-center justify-center overflow-hidden py-12 md:py-0">
         <div className="animate-item absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1920&q=80" 
