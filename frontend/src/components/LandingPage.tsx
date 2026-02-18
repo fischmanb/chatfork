@@ -1,23 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { 
-  ArrowRight, 
-  X,
-  ArrowUp,
-  ArrowDown,
-  Check
-} from 'lucide-react';
-import { useState } from 'react';
+import { ArrowRight, X, ArrowUp, ArrowDown, Check } from 'lucide-react';
 
-// Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
 
 interface LandingPageProps {
   onGetStarted: () => void;
 }
 
-// Custom Fork icon
 function ForkIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
@@ -30,7 +21,6 @@ function ForkIcon({ className }: { className?: string }) {
   );
 }
 
-// Custom Switch icon
 function SwitchIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
@@ -42,7 +32,6 @@ function SwitchIcon({ className }: { className?: string }) {
   );
 }
 
-// Custom Merge icon
 function MergeIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} stroke="currentColor" strokeWidth="2">
@@ -55,144 +44,234 @@ function MergeIcon({ className }: { className?: string }) {
 }
 
 export function LandingPage({ onGetStarted }: LandingPageProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const splitRef = useRef<HTMLDivElement>(null);
-  const mergeRef = useRef<HTMLDivElement>(null);
-  const keyboardRef = useRef<HTMLDivElement>(null);
-  const pricingRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const [currentSection, setCurrentSection] = useState(0);
+  const isScrolling = useRef(false);
+  const sectionTriggers = useRef<ScrollTrigger[]>([]);
+
+  const sections = ['hero', 'features', 'split', 'merge', 'keyboard', 'pricing', 'cta'];
+  const totalSections = sections.length;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero section - dramatic exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: heroRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .to('.hero-content', { y: -150, opacity: 0, duration: 0.4 }, 0.5)
-      .to('.hero-bg', { scale: 1.3, opacity: 0, duration: 0.4 }, 0.5);
+      // Kill any existing triggers
+      sectionTriggers.current.forEach(st => st.kill());
+      sectionTriggers.current = [];
 
-      // Features section - dramatic entrance/exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: featuresRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.features-title', { y: 100, opacity: 0, duration: 0.25 })
-      .from('.feature-card', { y: 150, opacity: 0, stagger: 0.08, duration: 0.25 }, 0.1)
-      .to('.features-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
+      // Create pinned sections with proper animation ranges
+      const createSectionAnimation = (
+        sectionClass: string,
+        enterAnimation: gsap.TweenVars,
+        exitAnimation: gsap.TweenVars
+      ) => {
+        const section = document.querySelector(sectionClass);
+        if (!section) return;
 
-      // Split section - dramatic entrance/exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: splitRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.split-text', { x: -200, opacity: 0, duration: 0.25 })
-      .from('.split-visual', { x: 200, opacity: 0, scale: 0.8, duration: 0.25 }, 0.1)
-      .to('.split-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
+        // Set initial state (hidden)
+        gsap.set(section.querySelectorAll('.animate-item'), { ...enterAnimation, opacity: 0 });
 
-      // Merge section - dramatic entrance/exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: mergeRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.merge-visual', { x: -200, opacity: 0, duration: 0.25 })
-      .from('.merge-text', { x: 200, opacity: 0, duration: 0.25 }, 0.1)
-      .to('.merge-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: 'top top',
+            end: '+=130%',
+            pin: true,
+            scrub: 0.3,
+            onUpdate: (self) => {
+              const progress = self.progress;
+              const sectionIndex = sections.findIndex(s => sectionClass.includes(s));
+              
+              // Update current section based on scroll position
+              if (progress > 0.1 && progress < 0.9) {
+                setCurrentSection(sectionIndex);
+              }
+            }
+          }
+        });
 
-      // Keyboard section - dramatic entrance/exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: keyboardRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.keyboard-title', { y: 100, opacity: 0, duration: 0.25 })
-      .from('.keyboard-card', { y: 120, opacity: 0, stagger: 0.08, duration: 0.25 }, 0.1)
-      .to('.keyboard-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
+        // ENTRANCE: 0% to 30%
+        tl.fromTo(
+          section.querySelectorAll('.animate-item'),
+          { ...enterAnimation, opacity: 0 },
+          { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.3, stagger: 0.05, ease: 'power2.out' },
+          0
+        );
 
-      // Pricing section - dramatic entrance/exit
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: pricingRef.current,
-          start: 'top top',
-          end: '+=120%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.pricing-title', { y: 100, opacity: 0, duration: 0.25 })
-      .from('.pricing-card', { y: 150, opacity: 0, stagger: 0.1, duration: 0.25 }, 0.1)
-      .to('.pricing-content', { y: -150, opacity: 0, duration: 0.35 }, 0.65);
+        // SETTLE: 30% to 70% (content stays visible)
+        // No animation here - content is fully visible
 
-      // CTA section - dramatic entrance
-      gsap.timeline({
-        scrollTrigger: {
-          trigger: ctaRef.current,
-          start: 'top top',
-          end: '+=100%',
-          pin: true,
-          scrub: 0.5,
-        }
-      })
-      .from('.cta-title', { y: 100, opacity: 0, duration: 0.3 })
-      .from('.cta-form', { y: 80, opacity: 0, duration: 0.3 }, 0.1)
-      .from('.cta-bg', { scale: 1.2, duration: 0.5 }, 0);
+        // EXIT: 70% to 100%
+        tl.to(
+          section.querySelectorAll('.animate-item'),
+          { ...exitAnimation, opacity: 0, duration: 0.3, stagger: 0.03, ease: 'power2.in' },
+          0.7
+        );
 
-      // Global snap - ensures users always land on a section
+        if (tl.scrollTrigger) {
+          sectionTriggers.current.push(tl.scrollTrigger);
+        }
+      };
+
+      // Hero: fades up and scales in, exits up and fades
+      createSectionAnimation('.section-hero',
+        { y: 80, scale: 0.95 },
+        { y: -100, scale: 1.05 }
+      );
+
+      // Features: cards slide up with stagger
+      createSectionAnimation('.section-features',
+        { y: 100 },
+        { y: -120 }
+      );
+
+      // Split: text from left, visual from right
+      const splitSection = document.querySelector('.section-split');
+      if (splitSection) {
+        gsap.set(splitSection.querySelectorAll('.split-left'), { x: -150, opacity: 0 });
+        gsap.set(splitSection.querySelectorAll('.split-right'), { x: 150, opacity: 0 });
+
+        const splitTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: splitSection,
+            start: 'top top',
+            end: '+=130%',
+            pin: true,
+            scrub: 0.3,
+            onUpdate: (self) => {
+              if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(2);
+            }
+          }
+        });
+
+        // Enter
+        splitTl.to(splitSection.querySelectorAll('.split-left'), 
+          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
+        splitTl.to(splitSection.querySelectorAll('.split-right'), 
+          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
+
+        // Exit
+        splitTl.to(splitSection.querySelectorAll('.split-left'), 
+          { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+        splitTl.to(splitSection.querySelectorAll('.split-right'), 
+          { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+
+        if (splitTl.scrollTrigger) sectionTriggers.current.push(splitTl.scrollTrigger);
+      }
+
+      // Merge: visual from left, text from right
+      const mergeSection = document.querySelector('.section-merge');
+      if (mergeSection) {
+        gsap.set(mergeSection.querySelectorAll('.merge-left'), { x: -150, opacity: 0 });
+        gsap.set(mergeSection.querySelectorAll('.merge-right'), { x: 150, opacity: 0 });
+
+        const mergeTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: mergeSection,
+            start: 'top top',
+            end: '+=130%',
+            pin: true,
+            scrub: 0.3,
+            onUpdate: (self) => {
+              if (self.progress > 0.1 && self.progress < 0.9) setCurrentSection(3);
+            }
+          }
+        });
+
+        mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
+          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0);
+        mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
+          { x: 0, opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05);
+
+        mergeTl.to(mergeSection.querySelectorAll('.merge-left'), 
+          { x: -100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+        mergeTl.to(mergeSection.querySelectorAll('.merge-right'), 
+          { x: 100, opacity: 0, duration: 0.25, ease: 'power2.in' }, 0.7);
+
+        if (mergeTl.scrollTrigger) sectionTriggers.current.push(mergeTl.scrollTrigger);
+      }
+
+      // Keyboard
+      createSectionAnimation('.section-keyboard',
+        { y: 80, scale: 0.9 },
+        { y: -100, scale: 1.1 }
+      );
+
+      // Pricing
+      createSectionAnimation('.section-pricing',
+        { y: 100 },
+        { y: -100 }
+      );
+
+      // CTA (no exit, just entrance)
+      const ctaSection = document.querySelector('.section-cta');
+      if (ctaSection) {
+        gsap.set(ctaSection.querySelectorAll('.animate-item'), { y: 60, opacity: 0 });
+
+        const ctaTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: ctaSection,
+            start: 'top top',
+            end: '+=100%',
+            pin: true,
+            scrub: 0.3,
+            onUpdate: (self) => {
+              if (self.progress > 0.1) setCurrentSection(6);
+            }
+          }
+        });
+
+        ctaTl.to(ctaSection.querySelectorAll('.animate-item'), 
+          { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: 'power2.out' }, 0);
+
+        if (ctaTl.scrollTrigger) sectionTriggers.current.push(ctaTl.scrollTrigger);
+      }
+
+      // GLOBAL SNAP - This is the key fix
       ScrollTrigger.create({
         snap: {
           snapTo: (progress) => {
-            const sectionCount = 7;
-            const sectionProgress = 1 / sectionCount;
-            const currentSection = Math.round(progress / sectionProgress);
-            return currentSection * sectionProgress;
+            // Calculate which section we're closest to
+            const sectionProgress = 1 / totalSections;
+            const rawSection = progress / sectionProgress;
+            const section = Math.round(rawSection);
+            
+            // Clamp to valid range
+            const clampedSection = Math.max(0, Math.min(section, totalSections - 1));
+            
+            return clampedSection * sectionProgress;
           },
-          duration: { min: 0.15, max: 0.35 },
+          duration: { min: 0.2, max: 0.4 },
           delay: 0,
           ease: 'power2.inOut'
         }
       });
 
-    }, containerRef);
+    }, mainRef);
 
-    return () => ctx.revert();
+    return () => {
+      sectionTriggers.current.forEach(st => st.kill());
+      ctx.revert();
+    };
   }, []);
 
+  const scrollToSection = (index: number) => {
+    if (index < 0 || index >= totalSections) return;
+    const sectionEl = document.querySelector(`.section-${sections[index]}`);
+    if (sectionEl) {
+      sectionEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div ref={containerRef} className="relative bg-black">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between bg-black/50 backdrop-blur-md">
+    <div ref={mainRef} className="relative bg-black">
+      {/* Fixed Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between bg-black/60 backdrop-blur-md">
         <div className="flex items-center gap-2">
           <ForkIcon className="w-6 h-6 text-[#a3e635]" />
           <span className="text-xl font-semibold text-white">Chatfork</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => pricingRef.current?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
+          <button onClick={() => scrollToSection(5)} className="text-sm text-white/60 hover:text-white transition-colors">Pricing</button>
           <button onClick={onGetStarted} className="text-sm text-white/60 hover:text-white transition-colors">Sign in</button>
         </div>
         <button 
@@ -203,9 +282,24 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </button>
       </nav>
 
-      {/* Hero Section */}
-      <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="hero-bg absolute inset-0">
+      {/* Section Indicators */}
+      <div className="fixed right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3">
+        {sections.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => scrollToSection(index)}
+            className={`w-2 rounded-full transition-all duration-300 ${
+              currentSection === index 
+                ? 'bg-[#a3e635] h-6' 
+                : 'bg-white/20 h-2 hover:bg-white/40'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* HERO SECTION */}
+      <section className="section-hero relative h-screen flex items-center justify-center overflow-hidden">
+        <div className="animate-item absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1920&q=80" 
             alt="Developer workspace"
@@ -215,23 +309,23 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/50" />
         </div>
 
-        <div className="hero-content relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
-          <p className="text-xs tracking-[0.2em] text-white/40 uppercase mb-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full pt-20">
+          <p className="animate-item text-xs tracking-[0.2em] text-white/40 uppercase mb-8">
             Branched Chat for Product Teams
           </p>
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-8">
+              <h1 className="animate-item text-5xl md:text-6xl lg:text-7xl font-light leading-[1.1] mb-8">
                 <span className="block text-white">Fork the thread.</span>
                 <span className="block text-white/60">Keep context.</span>
               </h1>
               
-              <p className="text-lg text-white/50 max-w-md mb-10 leading-relaxed">
+              <p className="animate-item text-lg text-white/50 max-w-md mb-10 leading-relaxed">
                 Chatfork turns any message into a branch—explore ideas without losing the main line.
               </p>
 
-              <div className="flex items-center gap-4">
+              <div className="animate-item">
                 <button 
                   onClick={onGetStarted}
                   className="group px-6 py-3 bg-[#a3e635] text-black font-medium rounded-lg hover:bg-[#b9f564] transition-all flex items-center gap-2"
@@ -242,7 +336,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="animate-item relative">
               <div className="bg-[#141414]/90 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden shadow-2xl">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
                   <div className="flex items-center gap-2">
@@ -288,10 +382,10 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section ref={featuresRef} className="relative h-screen flex items-center justify-center bg-black">
-        <div className="features-content max-w-7xl mx-auto px-6 w-full">
-          <h2 className="features-title text-4xl md:text-5xl font-light text-center mb-20 text-white">
+      {/* FEATURES SECTION */}
+      <section className="section-features relative h-screen flex items-center justify-center bg-black">
+        <div className="max-w-7xl mx-auto px-6 w-full">
+          <h2 className="animate-item text-4xl md:text-5xl font-light text-center mb-20 text-white">
             Three moves. Total control.
           </h2>
 
@@ -301,7 +395,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               { icon: SwitchIcon, title: 'Switch', desc: 'Jump between branches instantly. Context stays intact—no scrolling, no confusion.' },
               { icon: MergeIcon, title: 'Merge', desc: 'Bring the best ideas back. Compare before you commit.' },
             ].map((feature, i) => (
-              <div key={i} className="feature-card group bg-[#141414] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-all">
+              <div key={i} className="animate-item group bg-[#141414] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-all hover:scale-[1.02]">
                 <div className="w-12 h-12 bg-[#a3e635]/10 rounded-xl flex items-center justify-center mb-6">
                   <feature.icon className="w-6 h-6 text-[#a3e635]" />
                 </div>
@@ -313,11 +407,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Split Section */}
-      <section ref={splitRef} className="relative h-screen flex items-center justify-center bg-black">
-        <div className="split-content max-w-7xl mx-auto px-6 w-full">
+      {/* SPLIT SECTION */}
+      <section className="section-split relative h-screen flex items-center justify-center bg-black">
+        <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="split-text">
+            <div className="split-left">
               <h2 className="text-4xl md:text-5xl font-light mb-6">
                 <span className="block text-white">Split the</span>
                 <span className="block text-white/60">stream.</span>
@@ -327,7 +421,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               </p>
             </div>
 
-            <div className="split-visual bg-[#141414] border border-white/5 rounded-2xl p-6">
+            <div className="split-right bg-[#141414] border border-white/5 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <span className="text-sm text-white/40">Branch Map</span>
                 <div className="flex gap-1.5">
@@ -363,11 +457,11 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Merge Section */}
-      <section ref={mergeRef} className="relative h-screen flex items-center justify-center bg-black">
-        <div className="merge-content max-w-7xl mx-auto px-6 w-full">
+      {/* MERGE SECTION */}
+      <section className="section-merge relative h-screen flex items-center justify-center bg-black">
+        <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="merge-visual bg-[#141414] border border-white/5 rounded-2xl p-6">
+            <div className="merge-left bg-[#141414] border border-white/5 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3 text-sm">
                   <span className="text-white/40">Compare</span>
@@ -412,7 +506,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               </div>
             </div>
 
-            <div className="merge-text">
+            <div className="merge-right">
               <h2 className="text-4xl md:text-5xl font-light mb-6">
                 <span className="block text-white">Bring it</span>
                 <span className="block text-white/60">back.</span>
@@ -425,13 +519,13 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Keyboard Section */}
-      <section ref={keyboardRef} className="relative h-screen flex items-center justify-center bg-black">
-        <div className="keyboard-content max-w-4xl mx-auto px-6 w-full text-center">
-          <h2 className="keyboard-title text-4xl md:text-5xl font-light mb-6 text-white">
+      {/* KEYBOARD SECTION */}
+      <section className="section-keyboard relative h-screen flex items-center justify-center bg-black">
+        <div className="max-w-4xl mx-auto px-6 w-full text-center">
+          <h2 className="animate-item text-4xl md:text-5xl font-light mb-6 text-white">
             Keyboard-first. No friction.
           </h2>
-          <p className="text-lg text-white/50 mb-16">
+          <p className="animate-item text-lg text-white/50 mb-16">
             Branch, switch, and merge without touching the mouse.
           </p>
 
@@ -441,7 +535,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               { keys: ['⌘', 'Shift', '↑'], icon: ArrowUp, label: 'Previous branch' },
               { keys: ['⌘', 'Shift', '↓'], icon: ArrowDown, label: 'Next branch' },
             ].map((shortcut, i) => (
-              <div key={i} className="keyboard-card bg-[#141414] border border-white/5 rounded-2xl p-8">
+              <div key={i} className="animate-item bg-[#141414] border border-white/5 rounded-2xl p-8 hover:border-white/10 transition-all">
                 <div className="flex justify-center gap-2 mb-6">
                   {shortcut.keys.map((key, j) => (
                     <kbd key={j} className="px-3 py-2 bg-white/5 rounded-lg text-sm font-mono text-white/60 border border-white/10">
@@ -459,18 +553,18 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section ref={pricingRef} className="relative h-screen flex items-center justify-center bg-black">
-        <div className="pricing-content max-w-5xl mx-auto px-6 w-full">
-          <h2 className="pricing-title text-4xl md:text-5xl font-light text-center mb-6 text-white">
+      {/* PRICING SECTION */}
+      <section className="section-pricing relative h-screen flex items-center justify-center bg-black">
+        <div className="max-w-5xl mx-auto px-6 w-full">
+          <h2 className="animate-item text-4xl md:text-5xl font-light text-center mb-6 text-white">
             Simple plans.
           </h2>
-          <p className="text-lg text-white/50 text-center mb-16 max-w-xl mx-auto">
+          <p className="animate-item text-lg text-white/50 text-center mb-16 max-w-xl mx-auto">
             Start free. Upgrade when you need more branches and teammates.
           </p>
 
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="pricing-card bg-[#141414] border border-white/5 rounded-2xl p-8">
+            <div className="animate-item bg-[#141414] border border-white/5 rounded-2xl p-8">
               <p className="text-xs text-white/40 uppercase tracking-wider mb-4">Free</p>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-light text-white">$0</span>
@@ -491,7 +585,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               </button>
             </div>
 
-            <div className="pricing-card bg-[#141414] border border-[#a3e635]/30 rounded-2xl p-8 relative">
+            <div className="animate-item bg-[#141414] border border-[#a3e635]/30 rounded-2xl p-8 relative">
               <div className="absolute top-0 right-8 -translate-y-1/2">
                 <span className="px-3 py-1 bg-[#a3e635]/20 text-[#a3e635] text-xs rounded-full">Popular</span>
               </div>
@@ -520,9 +614,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section ref={ctaRef} className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="cta-bg absolute inset-0">
+      {/* CTA SECTION */}
+      <section className="section-cta relative h-screen flex items-center justify-center overflow-hidden">
+        <div className="animate-item absolute inset-0">
           <img 
             src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1920&q=80" 
             alt="Office"
@@ -532,14 +626,14 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         </div>
 
         <div className="relative z-10 max-w-3xl mx-auto px-6 w-full text-center">
-          <h2 className="cta-title text-4xl md:text-5xl font-light mb-6 text-white">
+          <h2 className="animate-item text-4xl md:text-5xl font-light mb-6 text-white">
             Start for free today.
           </h2>
-          <p className="text-lg text-white/50 mb-10">
+          <p className="animate-item text-lg text-white/50 mb-10">
             No credit card. No setup. Just fork your first thread.
           </p>
 
-          <div className="cta-form flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+          <div className="animate-item flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
             <input 
               type="email" 
               placeholder="Email address"
@@ -554,7 +648,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             </button>
           </div>
 
-          <p className="mt-6 text-sm text-white/30">
+          <p className="animate-item mt-6 text-sm text-white/30">
             By signing up, you agree to our Terms & Privacy.
           </p>
         </div>
@@ -576,6 +670,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   );
 }
 
+// AuthModal component (unchanged)
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -621,10 +716,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup, error, isLoading
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative w-full max-w-md bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors z-10"
-        >
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-white/40 hover:text-white transition-colors z-10">
           <X className="w-5 h-5" />
         </button>
 
@@ -705,10 +797,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onSignup, error, isLoading
         <div className="px-8 pb-8 text-center">
           <p className="text-white/40 text-sm">
             {isLoginMode ? "Don't have an account?" : "Already have an account?"}
-            <button
-              onClick={() => setIsLoginMode(!isLoginMode)}
-              className="ml-1 text-[#a3e635] hover:text-[#b9f564] font-medium"
-            >
+            <button onClick={() => setIsLoginMode(!isLoginMode)} className="ml-1 text-[#a3e635] hover:text-[#b9f564] font-medium">
               {isLoginMode ? 'Sign up' : 'Sign in'}
             </button>
           </p>
