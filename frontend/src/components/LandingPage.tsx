@@ -48,76 +48,72 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Wait for DOM to be ready
-    const initAnimations = () => {
-      const sections = document.querySelectorAll('.pinned-section');
+    const ctx = gsap.context(() => {
+      const sections = gsap.utils.toArray<HTMLElement>('.pinned-section');
       
-      sections.forEach((section, index) => {
+      sections.forEach((section, i) => {
         const items = section.querySelectorAll('.gsap-item');
-        const isHero = index === 0;
+        const isHero = i === 0;
         
-        // Hero starts visible, others start hidden
+        // Set initial states
         if (!isHero) {
-          gsap.set(items, { opacity: 0, y: 60 });
+          gsap.set(items, { y: 60, opacity: 0 });
         }
-
+        
+        // Create timeline for this section with pin
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: section,
             start: 'top top',
-            end: '+=120%',
+            end: '+=130%',
             pin: true,
             scrub: 0.5,
+            snap: {
+              snapTo: (progress) => {
+                if (progress < 0.15) return 0.15; // Snap to settle start
+                if (progress > 0.85) return 1;     // Snap to end
+                return 0.5; // Stay in settle phase
+              },
+              duration: { min: 0.15, max: 0.35 },
+              delay: 0,
+              ease: 'power2.out'
+            }
           }
         });
-
-        if (isHero) {
-          // Hero: stay visible until very end, then quick exit
-          tl.to(items, { 
-            y: -100, 
-            opacity: 0, 
-            duration: 0.1,
-            ease: 'power2.in'
-          }, 0.9);
-        } else {
-          // Enter (0-15%), SETTLE (15-90%) - fully visible, exit (90-100%)
-          tl.fromTo(items, 
-            { y: 80, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.15, stagger: 0.03, ease: 'power2.out' },
-            0
-          );
-          // Exit only at the very end
-          tl.to(items, { 
-            y: -80, 
-            opacity: 0, 
-            duration: 0.1, 
+        
+        if (!isHero) {
+          // ENTRANCE: 0-20% - items slide up and fade in
+          tl.to(items, {
+            y: 0,
+            opacity: 1,
+            duration: 0.2,
+            stagger: 0.02,
+            ease: 'power2.out'
+          }, 0);
+          
+          // SETTLE: 20-80% - content stays fully visible (no animation)
+          // EXIT: 80-100% - items slide up and fade out
+          tl.to(items, {
+            y: -60,
+            opacity: 0,
+            duration: 0.2,
             stagger: 0.02,
             ease: 'power2.in'
-          }, 0.9);
+          }, 0.8);
+        } else {
+          // Hero section - just fade out at the end
+          tl.to(items, {
+            y: -40,
+            opacity: 0,
+            duration: 0.2,
+            stagger: 0.02,
+            ease: 'power2.in'
+          }, 0.8);
         }
       });
+    }, containerRef);
 
-      // Global snap
-      ScrollTrigger.create({
-        snap: {
-          snapTo: (progress) => {
-            const sectionCount = 7;
-            const sectionSize = 1 / sectionCount;
-            return Math.round(progress / sectionSize) * sectionSize;
-          },
-          duration: { min: 0.15, max: 0.35 },
-          ease: 'power2.inOut'
-        }
-      });
-    };
-
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(initAnimations, 100);
-
-    return () => {
-      clearTimeout(timer);
-      ScrollTrigger.getAll().forEach(st => st.kill());
-    };
+    return () => ctx.revert();
   }, []);
 
   return (

@@ -41,6 +41,52 @@ aiRouter.post('/chat', async (c) => {
       return c.json({ error: 'Invalid stored API key. Please re-configure your API key.' }, 401);
     }
     
+    // Load branch-specific messages from database for proper context isolation
+    let contextMessages: Array<{ role: string; content: string }> = [];
+    
+    if (conversationId && branchId) {
+      // Get branch info to check for parent
+      const branch = await c.env.DB.prepare(
+        'SELECT id, parent_branch_id, forked_from_message_id FROM branches WHERE id = ? AND conversation_id = ?'
+      ).bind(branchId, conversationId).first();
+      
+      if (branch) {
+        // Build context: parent messages up to fork point + branch messages
+        let dbMessages: any[] = [];
+        
+        if (branch.parent_branch_id && branch.forked_from_message_id) {
+          // Get parent messages up to and including the forked message
+          const parentMessages = await c.env.DB.prepare(
+            `SELECT role, content 
+             FROM messages 
+             WHERE branch_id = ? 
+             AND created_at <= (SELECT created_at FROM messages WHERE id = ?)
+             ORDER BY created_at ASC`
+          ).bind(branch.parent_branch_id, branch.forked_from_message_id).all();
+          
+          dbMessages = [...(parentMessages.results || [])];
+        }
+        
+        // Get messages belonging to this branch
+        const branchMessages = await c.env.DB.prepare(
+          `SELECT role, content 
+           FROM messages 
+           WHERE branch_id = ? 
+           ORDER BY created_at ASC`
+        ).bind(branchId).all();
+        
+        dbMessages = [...dbMessages, ...(branchMessages.results || [])];
+        
+        // Use database messages for context, but append the latest user message from frontend
+        contextMessages = dbMessages.map((m: any) => ({ role: m.role, content: m.content }));
+      }
+    }
+    
+    // If we couldn't load from DB, fall back to frontend messages (for new conversations)
+    const messagesForAI = contextMessages.length > 0 
+      ? [...contextMessages, messages[messages.length - 1]].map((m: any) => ({ role: m.role, content: m.content }))
+      : messages.map((m: any) => ({ role: m.role, content: m.content }));
+    
     const response = await fetch('https://api.moonshot.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -49,7 +95,7 @@ aiRouter.post('/chat', async (c) => {
       },
       body: JSON.stringify({
         model: 'kimi-latest',
-        messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+        messages: messagesForAI,
         stream: false,
       }),
     });
